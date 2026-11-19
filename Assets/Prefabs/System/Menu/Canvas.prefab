@@ -49,6 +49,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   Menu1: {fileID: 3468488345954855601}
   Menu2: {fileID: 3468488347259621780}
+  XRTarget: {fileID: 0}
 --- !u!1 &3468488345994556244
 GameObject:
   m_ObjectHideFlags: 0
@@ -499,7 +500,7 @@ MonoBehaviour:
   m_FallbackScreenDPI: 96
   m_DefaultSpriteDPI: 96
   m_DynamicPixelsPerUnit: 1
-  m_PresetInfoIsWorld: 0
+  m_PresetInfoIsWorld: 1
 --- !u!114 &3468488346486167752
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1210,6 +1211,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   Menu1: {fileID: 3468488347259621780}
   Menu2: {fileID: 3468488345954855601}
+  XRTarget: {fileID: 0}
 --- !u!1 &3468488347299805600
 GameObject:
   m_ObjectHideFlags: 0

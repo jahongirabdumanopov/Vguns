@@ -1,6 +1,7 @@
 ﻿using TMPro;
 using UnityEngine;
 using UnityEngine.AI;
+using VGuns.Broadcast;
 
 public class EnemyAi : MonoBehaviour
 {
@@ -33,6 +34,9 @@ public class EnemyAi : MonoBehaviour
     bool alreadyAttacked;
     public GameObject projectile;
 
+    // telemetry: avoid counting the same death twice while DestroyEnemy is pending
+    bool killEventPending;
+
     //States
     public float sightRange, attackRange;
     public bool playerInSightRange, playerInAttackRange;
@@ -49,6 +53,7 @@ public class EnemyAi : MonoBehaviour
         player = GameObject.Find("Camera Offset").transform;
         agent = GetComponent<NavMeshAgent>();
         alreadyAttacked = false;
+        GameEventBus.Raise(GameEventType.EnemySpawned, transform.position, gameObject.name); // telemetry / AI director
     }
 
     private void Update()
@@ -113,6 +118,7 @@ public class EnemyAi : MonoBehaviour
         
         if (!alreadyAttacked)
         {
+            GameEventBus.Raise(GameEventType.EnemyAttack, Attackpoint.position, gameObject.name, "player"); // telemetry / AI director
             AudioManager.Play("Gun Fire");
             
            ///Attack code here
@@ -134,11 +140,21 @@ public class EnemyAi : MonoBehaviour
     public void TakeDamage(int damage)
     {
         health -= damage;
+        GameEventBus.Raise(GameEventType.EnemyHit, transform.position, "player", gameObject.name, damage, "health " + health); // telemetry / AI director
 
-        if (health <= 0) Invoke(nameof(DestroyEnemy), 0.5f);
+        if (health <= 0)
+        {
+            if (!killEventPending)
+            {
+                killEventPending = true;
+                GameEventBus.Raise(GameEventType.EnemyKilled, transform.position, "player", gameObject.name, damage); // telemetry / AI director
+            }
+            Invoke(nameof(DestroyEnemy), 0.5f);
+        }
     }
     private void DestroyEnemy()
     {
+        killEventPending = false;
         AudioManager.Play("EnemyDie");
         walkPoint = startpoint.position;
         agent.acceleration = 0f;

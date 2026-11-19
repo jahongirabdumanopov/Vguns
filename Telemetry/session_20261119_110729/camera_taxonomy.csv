@@ -1,0 +1,9 @@
+shot_id,angle,label,shot_size,height,movement,subject,fov,min_hold_s,max_hold_s,triggers,purpose
+FPV_Stabilized,FPV,First person,CloseUp,EyeLevel,HeadLocked,player view,80,2,12,steady aiming; active shooting; enemy close in front,Player's own view with head jitter and roll removed so viewers do not get motion sick
+TPV_OverShoulder,TPV,Third person,Medium,EyeLevel,Follow,player avatar,65,2,12,fast head movement; reloading; low health,Over-the-shoulder follow camera showing the player's body and surroundings
+TPV_ThreatFocus,TPV,Third person - threat,MediumWide,EyeLevel,Follow,player + nearest enemy,62,2,10,player hit; enemies within attack range,"Behind the player, aimed at the nearest enemy so viewers see where danger comes from"
+CINE_Orbit,CINE,Cinematic - orbit,MediumWide,High,Orbit,player avatar,60,3,10,downtime; no enemies; between waves,Slow orbit around the player during quiet moments
+CINE_WideEstablishing,CINE,Cinematic - wide,Wide,High,Crane,player + all enemies,70,2.5,8,wave started; many enemies alive,High wide shot that establishes the arena and enemy positions
+CINE_KillCam,CINE,Cinematic - kill cam,Medium,Low,Dolly,killed enemy + shooter,55,1.5,4,enemy killed; multi-kill,Side-on replay-style framing of the shooter and the enemy that just died
+CINE_DeathCam,CINE,Cinematic - death cam,Wide,Overhead,Crane,player death spot,60,3,999,player death,Crane up and away from the player's position when they die
+CINE_LowHero,CINE,Cinematic - low hero,Medium,Low,Follow,player avatar (front),55,2,6,bullet time; intense moment,Low angle in front of the player looking up for dramatic moments

@@ -2,6 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.InputSystem;
+using VGuns.Broadcast;
 
 public class SpeedUpTime : MonoBehaviour
 {
@@ -18,5 +19,6 @@ public class SpeedUpTime : MonoBehaviour
     private void SpeedUpActivatevoid(InputAction.CallbackContext obj)
     {
         TimeManager.DoSpeedUp();
+        GameEventBus.Raise(GameEventType.SpeedUpStarted, transform.position, "player", "", TimeManager.SpeedupFactor); // telemetry / AI director
     }
 }

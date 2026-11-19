@@ -1,0 +1,357 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>VGuns · AI Director Live</title>
+<style>
+  :root {
+    --bg: #07090d; --panel: #0e131b; --panel2: #141b26; --line: #1f2a3a;
+    --text: #e8eef6; --muted: #7d8ca1;
+    --fpv: #4cc0ff; --tpv: #ffb840; --cine: #d966ff;
+    --good: #4fe39a; --bad: #ff6b6b; --live: #ff3b3b;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; height: 100%; background: var(--bg); color: var(--text);
+    font: 14px/1.4 ui-sans-serif, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; }
+  header { display: flex; align-items: center; gap: 14px; padding: 10px 18px; border-bottom: 1px solid var(--line); }
+  header h1 { font-size: 15px; letter-spacing: .14em; margin: 0; font-weight: 700; }
+  header h1 span { color: var(--cine); }
+  .pill { font-size: 11px; padding: 3px 9px; border-radius: 99px; border: 1px solid var(--line); color: var(--muted); }
+  .pill.on { color: #fff; border-color: var(--good); }
+  .pill.off { color: var(--bad); border-color: var(--bad); }
+  header .grow { flex: 1; }
+  main { display: grid; grid-template-columns: minmax(0, 1fr) 380px; gap: 16px; padding: 16px 18px; }
+  @media (max-width: 1100px) { main { grid-template-columns: 1fr; } }
+
+  .stage { position: relative; background: #000; border-radius: 10px; overflow: hidden; aspect-ratio: 16 / 9; border: 1px solid var(--line); }
+  .stage img { width: 100%; height: 100%; object-fit: contain; display: block; }
+  .stage img.flip { transform: scaleY(-1); }
+  .ov-top { position: absolute; top: 14px; left: 14px; display: flex; gap: 8px; align-items: center; }
+  .live { background: var(--live); color: #fff; font-weight: 800; font-size: 12px; letter-spacing: .12em; padding: 4px 10px; border-radius: 4px; }
+  .live::before { content: "●"; margin-right: 6px; animation: blink 1s infinite; }
+  @keyframes blink { 50% { opacity: .25; } }
+  .chip { font-weight: 800; font-size: 13px; padding: 4px 10px; border-radius: 4px; color: #000; background: var(--fpv); transition: background .2s; }
+  .chip.TPV { background: var(--tpv); } .chip.CINE { background: var(--cine); }
+  .chip.ovr { outline: 2px solid #fff; }
+  .lower { position: absolute; left: 14px; right: 14px; bottom: 14px; display: flex; flex-direction: column; gap: 4px; pointer-events: none; }
+  .lower .title { align-self: flex-start; background: rgba(5,8,12,.82); padding: 6px 12px; border-left: 4px solid var(--cine); font-weight: 700; font-size: 16px; }
+  .lower .why { align-self: flex-start; background: rgba(5,8,12,.72); padding: 4px 12px; color: #cfd9e6; font-size: 13px; max-width: 90%; }
+  .flash { position: absolute; inset: 0; background: #fff; opacity: 0; pointer-events: none; }
+  .flash.go { animation: flash .35s ease-out; }
+  @keyframes flash { 0% { opacity: .35; } 100% { opacity: 0; } }
+  .waiting { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px;
+    background: radial-gradient(circle at 50% 40%, #121a26, #050608); text-align: center; padding: 20px; }
+  .waiting h2 { margin: 0; font-size: 20px; letter-spacing: .05em; }
+  .waiting p { margin: 0; color: var(--muted); }
+  .hidden { display: none !important; }
+
+  .controls { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; align-items: center; }
+  button { background: var(--panel2); color: var(--text); border: 1px solid var(--line); border-radius: 8px; padding: 9px 14px;
+    font: inherit; font-weight: 600; cursor: pointer; }
+  button:hover { border-color: #3a4a62; }
+  button.active { border-color: #fff; background: #223046; }
+  button[data-mode=fpv].active { border-color: var(--fpv); } button[data-mode=tpv].active { border-color: var(--tpv); }
+  button[data-mode=cine].active { border-color: var(--cine); } button[data-mode=auto].active { border-color: var(--good); }
+  button.good { color: var(--good); } button.bad { color: var(--bad); }
+  .controls .sep { width: 1px; height: 28px; background: var(--line); margin: 0 4px; }
+  .controls .hint { color: var(--muted); font-size: 12px; margin-left: auto; }
+
+  .card { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 14px; margin-bottom: 14px; }
+  .card h3 { margin: 0 0 10px; font-size: 11px; letter-spacing: .14em; color: var(--muted); font-weight: 700; text-transform: uppercase; }
+  .bar { display: grid; grid-template-columns: 44px 1fr 44px; gap: 8px; align-items: center; margin: 7px 0; }
+  .bar b { font-size: 12px; }
+  .track { position: relative; height: 14px; background: #ffffff10; border-radius: 3px; overflow: visible; }
+  .fill { height: 100%; border-radius: 3px; transition: width .2s; }
+  .tick { position: absolute; top: -3px; width: 2px; height: 20px; background: #fff; opacity: .8; transition: left .2s; }
+  .val { text-align: right; font-variant-numeric: tabular-nums; color: var(--muted); }
+  .kv { display: grid; grid-template-columns: 1fr 1fr; gap: 8px 14px; }
+  .kv div { display: flex; flex-direction: column; }
+  .kv small { color: var(--muted); font-size: 11px; }
+  .kv strong { font-size: 18px; font-variant-numeric: tabular-nums; }
+  .meta { color: var(--muted); font-size: 12px; margin-top: 8px; }
+  .hp { height: 8px; background: #ffffff12; border-radius: 4px; overflow: hidden; margin: 6px 0 10px; }
+  .hp > div { height: 100%; background: var(--good); transition: width .3s, background .3s; }
+  ul.log { list-style: none; margin: 0; padding: 0; max-height: 220px; overflow: auto; }
+  ul.log li { padding: 5px 0; border-bottom: 1px solid #ffffff0a; font-size: 12.5px; }
+  ul.log li .t { color: var(--muted); font-variant-numeric: tabular-nums; margin-right: 6px; }
+  .tag { display: inline-block; font-size: 10px; font-weight: 800; padding: 1px 6px; border-radius: 3px; color: #000; margin-right: 4px; }
+  .tag.FPV { background: var(--fpv); } .tag.TPV { background: var(--tpv); } .tag.CINE { background: var(--cine); }
+  canvas#timeline { width: 100%; height: 34px; display: block; border-radius: 4px; background: #ffffff08; }
+  .legend { display: flex; gap: 12px; font-size: 11px; color: var(--muted); margin-top: 6px; }
+  .legend i { display: inline-block; width: 10px; height: 10px; border-radius: 2px; margin-right: 4px; vertical-align: -1px; }
+  a { color: var(--fpv); text-decoration: none; } a:hover { text-decoration: underline; }
+  .sess { font-size: 12px; margin-bottom: 8px; }
+  .sess .files { display: flex; flex-wrap: wrap; gap: 4px 10px; margin-top: 3px; }
+  .left-col .card { margin-top: 14px; }
+</style>
+</head>
+<body>
+<header>
+  <h1>VGUNS · <span>AI DIRECTOR</span></h1>
+  <span id="conn" class="pill off">connecting…</span>
+  <span id="sess" class="pill">no session</span>
+  <span class="grow"></span>
+  <span id="model" class="pill">model –</span>
+  <span id="viewers" class="pill">0 viewers</span>
+</header>
+
+<main>
+  <section class="left-col">
+    <div class="stage" id="stage">
+      <img id="stream" alt="AI-directed spectator stream">
+      <div class="flash" id="flash"></div>
+      <div class="ov-top">
+        <span class="live">LIVE</span>
+        <span class="chip" id="chip">FPV</span>
+      </div>
+      <div class="lower">
+        <div class="title" id="shotTitle">–</div>
+        <div class="why" id="shotWhy"></div>
+      </div>
+      <div class="waiting" id="waiting">
+        <h2>Waiting for the game to start in the headset…</h2>
+        <p>The stream goes live when the level loads. Open this page from another device at <b id="lan">–</b></p>
+      </div>
+    </div>
+
+    <div class="controls">
+      <button data-mode="auto" class="active" title="0">AUTO (AI)</button>
+      <button data-mode="fpv" title="1">First person</button>
+      <button data-mode="tpv" title="2">Third person</button>
+      <button data-mode="cine" title="3">Cinematic</button>
+      <span class="sep"></span>
+      <button class="good" id="up" title="=">👍 Good cut</button>
+      <button class="bad" id="down" title="-">👎 Bad cut</button>
+      <span class="sep"></span>
+      <button id="flip" title="Flip the image if it shows upside down">Flip</button>
+      <button id="fs">Fullscreen</button>
+      <span class="hint">keys: 0 auto · 1 2 3 · = / − rate</span>
+    </div>
+
+    <div class="card">
+      <h3>Shot timeline · last 2 minutes</h3>
+      <canvas id="timeline" width="1200" height="34"></canvas>
+      <div class="legend"><span><i style="background:var(--fpv)"></i>FPV</span><span><i style="background:var(--tpv)"></i>TPV</span><span><i style="background:var(--cine)"></i>CINE</span><span><i style="background:#fff"></i>cut</span><span><i style="background:var(--bad)"></i>event</span></div>
+    </div>
+
+    <div class="card">
+      <h3>Decision log</h3>
+      <ul class="log" id="decisions"></ul>
+    </div>
+  </section>
+
+  <aside>
+    <div class="card">
+      <h3>AI decision</h3>
+      <div id="bars"></div>
+      <div class="meta" id="aiwants">–</div>
+      <div class="meta">Bars = trained model · white tick = rule baseline</div>
+    </div>
+
+    <div class="card">
+      <h3>Assessment</h3>
+      <div class="kv">
+        <div><small>Cuts / min</small><strong id="m-cpm">–</strong></div>
+        <div><small>Avg shot length</small><strong id="m-avg">–</strong></div>
+        <div><small>Avg confidence</small><strong id="m-conf">–</strong></div>
+        <div><small>Event → cut latency</small><strong id="m-lat">–</strong></div>
+        <div><small>Agreement w/ rules</small><strong id="m-rule">–</strong></div>
+        <div><small>Agreement w/ human</small><strong id="m-human">–</strong></div>
+        <div><small>Viewer approval</small><strong id="m-appr">–</strong></div>
+        <div><small>Screen time F/T/C</small><strong id="m-share" style="font-size:14px">–</strong></div>
+      </div>
+      <div class="meta" id="m-note">Use the override buttons to teach the AI: every tick you override is saved as a training label.</div>
+    </div>
+
+    <div class="card">
+      <h3>Game</h3>
+      <div style="display:flex;justify-content:space-between"><small style="color:var(--muted)">Health</small><small id="g-hp">–</small></div>
+      <div class="hp"><div id="g-hpbar" style="width:100%"></div></div>
+      <div class="kv">
+        <div><small>Enemies</small><strong id="g-en">–</strong></div>
+        <div><small>Kills</small><strong id="g-k">–</strong></div>
+        <div><small>Accuracy</small><strong id="g-acc">–</strong></div>
+        <div><small>Intensity</small><strong id="g-int">–</strong></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h3>Event feed</h3>
+      <ul class="log" id="events"></ul>
+    </div>
+
+    <div class="card">
+      <h3>Telemetry sessions (CSV)</h3>
+      <div id="sessions" class="meta">–</div>
+    </div>
+  </aside>
+</main>
+
+<script>
+(() => {
+  const $ = (id) => document.getElementById(id);
+  const ANG = ["FPV", "TPV", "CINE"];
+  const COL = { FPV: "#4cc0ff", TPV: "#ffb840", CINE: "#d966ff" };
+  const img = $("stream");
+  let lastShot = null, lastSession = null, live = false, failures = 0;
+  const history = [];   // {t, angle}
+  const cuts = [];      // t
+  const evMarks = [];   // t
+  const seenEvents = new Set();
+
+  // ---------- stream ----------
+  function connectStream() {
+    img.src = "/stream.mjpg?ts=" + Date.now();
+  }
+  img.onerror = () => setTimeout(connectStream, 1000);
+  connectStream();
+
+  try { if (localStorage.getItem("vguns.flip") === "1") img.classList.add("flip"); } catch (e) {}
+  $("flip").onclick = () => {
+    img.classList.toggle("flip");
+    try { localStorage.setItem("vguns.flip", img.classList.contains("flip") ? "1" : "0"); } catch (e) {}
+  };
+  $("fs").onclick = () => { const s = $("stage"); (s.requestFullscreen || s.webkitRequestFullscreen).call(s); };
+
+  // ---------- controls ----------
+  const call = (url) => fetch(url).catch(() => {});
+  document.querySelectorAll("button[data-mode]").forEach(b => b.onclick = () => call("/api/camera?mode=" + b.dataset.mode));
+  $("up").onclick = () => call("/api/rate?value=1");
+  $("down").onclick = () => call("/api/rate?value=-1");
+  document.addEventListener("keydown", (e) => {
+    if (e.target.tagName === "INPUT") return;
+    const m = { "0": "auto", "1": "fpv", "2": "tpv", "3": "cine" }[e.key];
+    if (m) call("/api/camera?mode=" + m);
+    if (e.key === "=" || e.key === "+") call("/api/rate?value=1");
+    if (e.key === "-") call("/api/rate?value=-1");
+  });
+
+  // ---------- bars ----------
+  $("bars").innerHTML = ANG.map(a => `
+    <div class="bar"><b style="color:${COL[a]}">${a}</b>
+      <div class="track"><div class="fill" id="f-${a}" style="background:${COL[a]};width:0"></div><div class="tick" id="t-${a}"></div></div>
+      <span class="val" id="v-${a}">–</span></div>`).join("");
+
+  const pct = (v) => v == null ? "–" : Math.round(v * 100) + "%";
+  const esc = (s) => String(s ?? "").replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+
+  // ---------- state polling ----------
+  async function poll() {
+    try {
+      const r = await fetch("/api/state", { cache: "no-store" });
+      const s = await r.json();
+      failures = 0;
+      $("conn").textContent = "connected"; $("conn").className = "pill on";
+      render(s);
+    } catch (e) {
+      if (++failures > 2) { $("conn").textContent = "game offline"; $("conn").className = "pill off"; }
+    }
+    setTimeout(poll, 250);
+  }
+
+  function render(s) {
+    live = !!s.live;
+    $("waiting").classList.toggle("hidden", live);
+    if (s.lanUrl) $("lan").textContent = s.lanUrl;
+    if (!live) { $("sess").textContent = "no session"; return; }
+    if (s.stream && s.stream.lanUrl) $("lan").textContent = s.stream.lanUrl;
+
+    if (s.session !== lastSession) { lastSession = s.session; history.length = 0; cuts.length = 0; evMarks.length = 0; seenEvents.clear(); loadSessions(); }
+    $("sess").textContent = "session " + s.session;
+    $("model").textContent = s.model.loaded ? `${s.model.name} · val ${pct(s.model.valAccuracy)}` : "rule baseline";
+    $("viewers").textContent = `${s.stream.viewers} viewer${s.stream.viewers === 1 ? "" : "s"} · ${Math.round(s.stream.fps)} fps`;
+
+    // overlay
+    const chip = $("chip");
+    chip.textContent = s.angle + (s.override ? " · MANUAL" : " · AI");
+    chip.className = "chip " + s.angle + (s.override ? " ovr" : "");
+    $("shotTitle").textContent = s.shotLabel;
+    $("shotTitle").style.borderLeftColor = COL[s.angle];
+    $("shotWhy").textContent = s.reason || "";
+    if (lastShot !== null && lastShot !== s.shot) { const f = $("flash"); f.classList.remove("go"); void f.offsetWidth; f.classList.add("go"); cuts.push(s.t); }
+    lastShot = s.shot;
+
+    document.querySelectorAll("button[data-mode]").forEach(b => {
+      const m = b.dataset.mode.toUpperCase();
+      b.classList.toggle("active", s.override ? m === s.override : m === "AUTO");
+    });
+
+    // bars
+    ANG.forEach((a, i) => {
+      $("f-" + a).style.width = (s.probs[i] * 100) + "%";
+      $("t-" + a).style.left = `calc(${s.ruleProbs[i] * 100}% - 1px)`;
+      $("v-" + a).textContent = pct(s.probs[i]);
+    });
+    $("aiwants").innerHTML = `AI wants <b style="color:${COL[s.aiChoice]}">${s.aiChoice}</b> · showing <b>${s.angle} ${esc(s.shotName)}</b> for ${s.held.toFixed(1)}s` +
+      (s.trigger ? ` · pending event <b>${esc(s.trigger)}</b>` : "");
+
+    // metrics
+    const m = s.metrics;
+    $("m-cpm").textContent = m.cutsPerMin.toFixed(1);
+    $("m-avg").textContent = m.avgShot.toFixed(1) + "s";
+    $("m-conf").textContent = pct(m.avgConfidence);
+    $("m-lat").textContent = m.eventCuts ? m.avgLatency.toFixed(2) + "s" : "–";
+    $("m-rule").textContent = pct(m.ruleAgreement);
+    $("m-human").textContent = m.humanAgreement == null ? "–" : pct(m.humanAgreement);
+    const n = m.up + m.down;
+    $("m-appr").innerHTML = n ? `${pct(m.up / n)} <small style="font-size:12px;color:var(--muted)">(+${m.up}/−${m.down})</small>` : "–";
+    $("m-share").textContent = m.share.map(v => Math.round(v) + "%").join(" / ");
+
+    // game
+    const g = s.game;
+    const hpf = g.maxHealth > 0 ? Math.max(0, g.health / g.maxHealth) : 0;
+    $("g-hp").textContent = g.dead ? "DEAD" : `${Math.round(g.health)} / ${Math.round(g.maxHealth)}`;
+    const bar = $("g-hpbar"); bar.style.width = (hpf * 100) + "%"; bar.style.background = hpf < .35 ? "var(--bad)" : "var(--good)";
+    $("g-en").textContent = g.enemies + (g.nearest != null ? ` · ${g.nearest.toFixed(1)}m` : "");
+    $("g-k").textContent = g.kills;
+    $("g-acc").textContent = g.shots ? pct(g.accuracy) : "–";
+    $("g-int").textContent = pct(g.intensity);
+
+    // logs
+    $("decisions").innerHTML = s.decisions.map(d =>
+      `<li><span class="t">${d.t.toFixed(1)}s</span><span class="tag ${d.from}">${d.from}</span>→ <span class="tag ${d.to}">${d.to}</span>
+       <b>${esc(d.shot)}</b> <span style="color:var(--muted)">· ${esc(d.source)} · ${pct(d.conf)}</span><br>
+       <span style="color:#b9c6d6">${esc(d.reason)}</span></li>`).join("") || "<li class='t'>no cuts yet</li>";
+    $("events").innerHTML = s.events.map(e => `<li><span class="t">${e.t.toFixed(1)}s</span><b>${esc(e.type)}</b> <span style="color:var(--muted)">${esc(e.detail)}</span></li>`).join("");
+    for (const e of s.events) {
+      const key = e.t + e.type;
+      if (!seenEvents.has(key) && /Killed|Death|Hit|Wave|MultiKill|BulletTime/.test(e.type)) { seenEvents.add(key); evMarks.push(e.t); }
+    }
+
+    history.push({ t: s.t, a: s.angle });
+    drawTimeline(s.t);
+  }
+
+  function drawTimeline(now) {
+    const c = $("timeline"), ctx = c.getContext("2d");
+    const W = c.width = c.clientWidth * devicePixelRatio, H = c.height = 34 * devicePixelRatio;
+    const span = 120, t0 = now - span, x = (t) => (t - t0) / span * W;
+    while (history.length && history[0].t < t0 - 2) history.shift();
+    ctx.clearRect(0, 0, W, H);
+    for (let i = 0; i < history.length; i++) {
+      const a = history[i], b = history[i + 1] || { t: now };
+      ctx.fillStyle = COL[a.a]; ctx.fillRect(x(a.t), H * 0.3, Math.max(1, x(b.t) - x(a.t) + 1), H * 0.7);
+    }
+    ctx.fillStyle = "#fff"; cuts.filter(t => t > t0).forEach(t => ctx.fillRect(x(t) - 1, H * 0.3, 2, H * 0.7));
+    ctx.fillStyle = "#ff6b6b"; evMarks.filter(t => t > t0).forEach(t => ctx.fillRect(x(t) - 1, 0, 3, H * 0.25));
+  }
+
+  // ---------- sessions ----------
+  async function loadSessions() {
+    try {
+      const r = await fetch("/api/sessions", { cache: "no-store" });
+      const s = await r.json();
+      if (!s.sessions || !s.sessions.length) { $("sessions").textContent = "No sessions yet. Folder: " + (s.root || ""); return; }
+      $("sessions").innerHTML = `<div style="margin-bottom:8px">Saved in <code>${esc(s.root)}</code></div>` +
+        s.sessions.slice(0, 8).map(x => `<div class="sess"><b>${esc(x.name)}</b>${x.name.endsWith(lastSession) ? " <span style='color:var(--good)'>● recording</span>" : ""}
+          <div class="files">${x.files.map(f => `<a href="/telemetry/${encodeURIComponent(x.name)}/${encodeURIComponent(f.name)}">${esc(f.name)}</a>`).join("")}</div></div>`).join("");
+    } catch (e) { $("sessions").textContent = "unavailable"; }
+  }
+  loadSessions();
+  setInterval(loadSessions, 15000);
+  poll();
+})();
+</script>
+</body>
+</html>

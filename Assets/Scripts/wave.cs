@@ -1,6 +1,7 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using VGuns.Broadcast;
 
 
 public class wave : MonoBehaviour
@@ -46,6 +47,7 @@ public class wave : MonoBehaviour
             if (wavespawn)
             {
                 yield return new WaitForSeconds(TimeBetweenWAves);
+                GameEventBus.Raise(GameEventType.WaveStarted, transform.position, gameObject.name, "", nextwave, "wave " + (nextwave + 1)); // telemetry / AI director
                 for (int i = 0; i < waves[nextwave].enemy.Length; i++)
                 {
                     for (int j = 0; j < waves[nextwave].count; j++)
@@ -62,6 +64,7 @@ public class wave : MonoBehaviour
             if (nextwave + 1 > waves.Length - 1)
             {
                 Debug.Log("waves completed");
+                GameEventBus.Raise(GameEventType.WavesCompleted, transform.position, gameObject.name, "", nextwave + 1); // telemetry / AI director
                 spawn = false;
                 yield break;
             }

@@ -2,6 +2,7 @@ using UnityEngine;
 using UnityEngine.InputSystem;
 using UnityEngine.SceneManagement;
 using UnityEngine.XR.Interaction.Toolkit;
+using VGuns.Broadcast;
 
 namespace PauseMenu
 {
@@ -64,6 +65,7 @@ namespace PauseMenu
         public void Show()
         {
             Time.timeScale = 0f;
+            GameEventBus.Raise(GameEventType.GamePaused, transform.position, "player"); // telemetry / AI director
 
             ray_Right.SetActive(true);
             ray_Left.SetActive(true);
@@ -79,6 +81,7 @@ namespace PauseMenu
         public void Hide()
         {
             Time.timeScale = 1f;
+            GameEventBus.Raise(GameEventType.GameResumed, transform.position, "player"); // telemetry / AI director
 
             ray_Right.SetActive(false);
             ray_Left.SetActive(false);

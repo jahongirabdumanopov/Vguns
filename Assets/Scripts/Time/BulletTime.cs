@@ -2,6 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.InputSystem;
+using VGuns.Broadcast;
 
 public class BulletTime : MonoBehaviour
 {
@@ -18,6 +19,7 @@ public class BulletTime : MonoBehaviour
     private void BulletTimeActivate(InputAction.CallbackContext obj)
     {
         TimeManager.DoSlowmotion();
+        GameEventBus.Raise(GameEventType.BulletTimeStarted, transform.position, "player", "", TimeManager.slowdownFactor); // telemetry / AI director
         
         Debug.Log("fuck you");
     }

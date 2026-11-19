@@ -1,0 +1,3 @@
+t,from_angle,from_shot,to_angle,to_shot,source,trigger,confidence,p_fpv,p_tpv,p_cine,held_s,reason
+13.293,FPV,FPV_Stabilized,TPV,TPV_OverShoulder,AI,-,0.548,0.051,0.548,0.401,13.273,Situation -> TPV (p=0.55): shot getting long | Over-shoulder
+15.52,TPV,TPV_OverShoulder,FPV,FPV_Stabilized,AI,-,0.574,0.574,0.314,0.112,2.227,Situation -> FPV (p=0.57) | Stabilized

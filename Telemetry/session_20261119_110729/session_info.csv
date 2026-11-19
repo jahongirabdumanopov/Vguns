@@ -1,0 +1,14 @@
+key,value
+session_id,20261119_110729
+started_local,2026-11-19 11:07:29
+scene,Endless Level
+product,Virtual Guns
+app_version,1
+unity_version,2020.3.39f1
+platform,OSXEditor
+device_model,"Mac16,1"
+xr_device,
+initial_health,10
+director_model,VGuns Director MLP 20261119-104721
+stream_url,http://172.19.18.125:8080/
+frame_rate_hz,10

@@ -1,0 +1,8 @@
+t,frame,type,actor,target,value,x,y,z,camera_angle,camera_shot,detail
+0.074,0,SessionStart,system,Endless Level,10,9.59,-6.17,-6.24,FPV,FPV_Stabilized,telemetry=/Users/abdumanopovjahongir/Desktop/Capstone/VGuns-Unity-VR/Telemetry/session_20261119_110729
+13.289,4,ViewerOverride,viewer,,0,9.59,-6.209,-6.24,FPV,FPV_Stabilized,FPV
+13.289,4,ViewerOverride,viewer,,1,9.59,-6.209,-6.24,FPV,FPV_Stabilized,TPV
+13.29,4,ViewerOverride,viewer,,-1,9.59,-6.209,-6.24,FPV,FPV_Stabilized,AUTO
+13.295,4,CameraCut,AI,TPV_OverShoulder,0.548,9.59,-6.193,-6.24,TPV,TPV_OverShoulder,FPV->TPV
+15.52,553,CameraCut,AI,FPV_Stabilized,0.574,9.789,-6.201,-7.302,FPV,FPV_Stabilized,TPV->FPV
+19.331,1485,SessionEnd,system,Endless Level,0,0,0,0,FPV,FPV_Stabilized,application quit

@@ -24,8 +24,8 @@ TagManager:
   - NavMesh
   - Menu
   - Bullets
-  - 
-  - 
+  - SpectatorOnly
+  - PlayerHUD
   - 
   - 
   - 

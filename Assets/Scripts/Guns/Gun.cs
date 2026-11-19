@@ -7,6 +7,7 @@ using System.Collections;
 using Guns;
 using UnityEngine.XR.Interaction.Toolkit;
 using Random = UnityEngine.Random;
+using VGuns.Broadcast;
 
 public class Gun : MonoBehaviour {
     public enum ShootState {
@@ -120,6 +121,7 @@ public class Gun : MonoBehaviour {
     public void Shoot() {
         // Checks that the gun is ready to shoot
         if(shootState == ShootState.Ready) {
+            GameEventBus.Raise(GameEventType.PlayerShot, GunPov.transform.position, "player", gameObject.name, remainingAmmunition - 1); // telemetry / AI director
             for(int i = 0; i < roundsPerShot; i++) {
                 
                 AudioManager.Play("Gun Fire");
@@ -152,6 +154,7 @@ public class Gun : MonoBehaviour {
     public void Reload() {
         // Checks that the gun is ready to be reloaded
         if(shootState == ShootState.Ready) {
+            GameEventBus.Raise(GameEventType.PlayerReload, transform.position, "player", gameObject.name, reloadTime); // telemetry / AI director
             nextShootTime = Time.time + reloadTime;
             shootState = ShootState.Reloading;
             text.SetText("Reloading");
